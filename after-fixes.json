@@ -1,0 +1,85 @@
+{
+ "res": {
+  "Medicine lines recognized": [
+   35,
+   35,
+   100
+  ],
+  "Medicine fields correct (dose/frequency/route/PRN/duration/daily mg)": [
+   77,
+   77,
+   100
+  ],
+  "Non-medicine lines correctly ignored": [
+   10,
+   10,
+   100
+  ],
+  "Safety problems detected (recall)": [
+   18,
+   18,
+   100
+  ],
+  "Safe cases without false alarms": [
+   7,
+   7,
+   100
+  ],
+  "Lab result status correct": [
+   10,
+   10,
+   100
+  ],
+  "Critical lab values flagged correctly": [
+   10,
+   10,
+   100
+  ],
+  "Error-prone abbreviations found": [
+   10,
+   10,
+   100
+  ],
+  "Clean text without abbreviation false flags": [
+   2,
+   2,
+   100
+  ],
+  "Warning-sign lists split correctly": [
+   3,
+   3,
+   100
+  ]
+ },
+ "fieldStats": {
+  "perDay": [
+   32,
+   32
+  ],
+  "prn": [
+   12,
+   12
+  ],
+  "route": [
+   16,
+   16
+  ],
+  "times": [
+   4,
+   4
+  ],
+  "durationDays": [
+   4,
+   4
+  ],
+  "mg": [
+   8,
+   8
+  ],
+  "complex": [
+   1,
+   1
+  ]
+ },
+ "fails": []
+}

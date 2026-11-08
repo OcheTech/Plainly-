@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plainly Held-out Test</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 20px; background: #f6f7f4; color: #17201d; }
+  table { border-collapse: collapse; width: 100%; background: #fff; margin: 10px 0 24px; }
+  th, td { border: 1px solid #d9e1dd; padding: 6px 8px; text-align: left; font-size: 14px; vertical-align: top; }
+  .ok { color: #157f3b; font-weight: 700; } .bad { color: #b42318; font-weight: 700; }
+  @media (prefers-color-scheme: dark) { body { background: #0f1513; color: #e8efec; } table { background: #17201d; } th, td { border-color: #2c3a35; } }
+</style>
+</head>
+<body>
+<h1>Plainly parser &amp; safety-check benchmark</h1>
+<p>Held-out cases in <code>heldout.js</code> (run once, not tuned). Runs entirely in the browser.</p>
+<div id="out"></div>
+<pre id="json" hidden></pre>
+<script src="../js/kb.js"></script><script src="../js/engine.js"></script><script src="../js/checks.js"></script><script src="heldout.js"></script>
+<script>
+(function () {
+  const E = PlainlyEngine, B = BENCH, fails = [];
+  const close = (a, b) => (a == null && b == null) || (a != null && b != null && Math.abs(a - b) < 0.01);
+  // ---------- medicine lines
+  let found = 0, fieldTot = 0, fieldOk = 0;
+  const fieldStats = {};
+  B.sig.forEach((c) => {
+    const meds = E.analyze(c.t).medications;
+    const m = meds.find((x) => x.key === c.g.key);
+    if (!m) { fails.push(["sig", c.t, "medicine not found (got: " + meds.map((x) => x.key || x.name).join(", ") + ")"]); return; }
+    found++;
+    Object.entries(c.g).forEach(([k, v]) => {
+      if (k === "key") return;
+      let got, ok;
+      if (k === "mg") { ok = Object.entries(v).every(([ing, mg]) => close(m.mgPerDay[ing], mg)); got = JSON.stringify(m.mgPerDay); }
+      else if (k === "times") { ok = JSON.stringify(m.times) === JSON.stringify(v); got = JSON.stringify(m.times); }
+      else if (k === "perDay") { ok = close(m.perDay, v); got = m.perDay; }
+      else { got = m[k]; ok = got === v || (v === false && !got); }
+      (fieldStats[k] ||= [0, 0])[1]++;
+      fieldTot++;
+      if (ok) { fieldOk++; fieldStats[k][0]++; } else fails.push(["sig", c.t, `${k}: expected ${JSON.stringify(v)}, got ${JSON.stringify(got)}`]);
+    });
+  });
+  let falseMeds = 0;
+  B.notMed.forEach((t) => { const meds = E.analyze(t).medications; if (meds.length) { falseMeds++; fails.push(["notMed", t, "read as medicine: " + meds.map((m) => m.display).join(", ")]); } });
+  // ---------- safety checks
+  let mustTot = 0, mustHit = 0, fpTot = 0, fp = 0;
+  B.safety.forEach((c) => {
+    const R = E.analyze(c.t), ids = PlainlyChecks.run(R, c.t).map((x) => x.id);
+    const alerts = PlainlyChecks.run(R, c.t).filter((x) => x.level !== "info").map((x) => x.id);
+    (c.must || []).forEach((id) => { mustTot++; if (ids.includes(id)) mustHit++; else fails.push(["safety", c.t, "missed " + id + " (got " + ids.join(", ") + ")"]); });
+    (c.mustNot || []).forEach((id) => { fpTot++; if (ids.includes(id)) { fp++; fails.push(["safety", c.t, "false alarm " + id]); } });
+    if (c.noAlerts) { fpTot++; if (alerts.length) { fp++; fails.push(["safety", c.t, "false alarms: " + alerts.join(", ")]); } }
+  });
+  // ---------- labs
+  let labOk = 0, critOk = 0;
+  B.labs.forEach((c) => {
+    const r = E.analyze(c.t).results[0];
+    if (!r) { fails.push(["lab", c.t, "not read as a lab result"]); return; }
+    if (r.status === c.status) labOk++; else fails.push(["lab", c.t, `status ${r.status}, expected ${c.status}`]);
+    if (!!r.critical === c.critical) critOk++; else fails.push(["lab", c.t, `critical ${r.critical}, expected ${c.critical}`]);
+  });
+  // ---------- ISMP
+  let ismpTot = 0, ismpHit = 0, ismpFP = 0, cleanTot = 0;
+  B.ismp.forEach((c) => {
+    const got = E.scanISMP(E.splitUnits(c.t)).map((i) => i.abbr);
+    c.must.forEach((a) => { ismpTot++; if (got.includes(a)) ismpHit++; else fails.push(["ismp", c.t, "missed " + a + " (got " + got.join(", ") + ")"]); });
+    if (c.clean) { cleanTot++; if (got.length) { ismpFP++; fails.push(["ismp", c.t, "false flag " + got.join(", ")]); } }
+  });
+  // ---------- warnings
+  let wOk = 0;
+  B.warnings.forEach((c) => {
+    const w = E.analyze(c.t).warning_signs;
+    const e = w.filter((x) => x.urgency === "emergency").length, k = w.filter((x) => x.urgency === "call_doctor").length;
+    if (e === c.emergency && k === c.call) wOk++; else fails.push(["warn", c.t, `got ${e} emergency / ${k} call, expected ${c.emergency} / ${c.call}`]);
+  });
+  const pct = (a, b) => (b ? Math.round((1000 * a) / b) / 10 : 100);
+  const res = {
+    "Medicine lines recognized": [found, B.sig.length, pct(found, B.sig.length)],
+    "Medicine fields correct (dose/frequency/route/PRN/duration/daily mg)": [fieldOk, fieldTot, pct(fieldOk, fieldTot)],
+    "Non-medicine lines correctly ignored": [B.notMed.length - falseMeds, B.notMed.length, pct(B.notMed.length - falseMeds, B.notMed.length)],
+    "Safety problems detected (recall)": [mustHit, mustTot, pct(mustHit, mustTot)],
+    "Safe cases without false alarms": [fpTot - fp, fpTot, pct(fpTot - fp, fpTot)],
+    "Lab result status correct": [labOk, B.labs.length, pct(labOk, B.labs.length)],
+    "Critical lab values flagged correctly": [critOk, B.labs.length, pct(critOk, B.labs.length)],
+    "Error-prone abbreviations found": [ismpHit, ismpTot, pct(ismpHit, ismpTot)],
+    "Clean text without abbreviation false flags": [cleanTot - ismpFP, cleanTot, pct(cleanTot - ismpFP, cleanTot)],
+    "Warning-sign lists split correctly": [wOk, B.warnings.length, pct(wOk, B.warnings.length)],
+  };
+  const fieldRows = Object.entries(fieldStats).map(([k, [a, b]]) => `<tr><td>${k}</td><td>${a}/${b}</td><td>${pct(a, b)}%</td></tr>`).join("");
+  document.getElementById("out").innerHTML =
+    `<table><tr><th>Measure</th><th>Correct</th><th>%</th></tr>${Object.entries(res).map(([k, [a, b, p]]) => `<tr><td>${k}</td><td>${a}/${b}</td><td class="${p >= 90 ? "ok" : "bad"}">${p}%</td></tr>`).join("")}</table>
+     <h2>Medicine fields</h2><table><tr><th>Field</th><th>Correct</th><th>%</th></tr>${fieldRows}</table>
+     <h2>Failures (${fails.length})</h2><table><tr><th>Area</th><th>Input</th><th>Problem</th></tr>${fails.map((f) => `<tr><td>${f[0]}</td><td>${f[1].replace(/</g, "&lt;").replace(/\n/g, "<br>")}</td><td>${f[2].replace(/</g, "&lt;")}</td></tr>`).join("")}</table>`;
+  document.getElementById("json").textContent = JSON.stringify({ res, fieldStats, fails });
+})();
+</script>
+</body>
+</html>

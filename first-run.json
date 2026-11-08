@@ -1,0 +1,116 @@
+{
+ "res": {
+  "Medicine lines recognized": [
+   35,
+   35,
+   100
+  ],
+  "Medicine fields correct (dose/frequency/route/PRN/duration/daily mg)": [
+   75,
+   77,
+   97.4
+  ],
+  "Non-medicine lines correctly ignored": [
+   10,
+   10,
+   100
+  ],
+  "Safety problems detected (recall)": [
+   16,
+   18,
+   88.9
+  ],
+  "Safe cases without false alarms": [
+   7,
+   7,
+   100
+  ],
+  "Lab result status correct": [
+   10,
+   10,
+   100
+  ],
+  "Critical lab values flagged correctly": [
+   10,
+   10,
+   100
+  ],
+  "Error-prone abbreviations found": [
+   10,
+   10,
+   100
+  ],
+  "Clean text without abbreviation false flags": [
+   2,
+   2,
+   100
+  ],
+  "Warning-sign lists split correctly": [
+   1,
+   3,
+   33.3
+  ]
+ },
+ "fieldStats": {
+  "perDay": [
+   31,
+   32
+  ],
+  "prn": [
+   12,
+   12
+  ],
+  "route": [
+   16,
+   16
+  ],
+  "times": [
+   4,
+   4
+  ],
+  "durationDays": [
+   4,
+   4
+  ],
+  "mg": [
+   7,
+   8
+  ],
+  "complex": [
+   1,
+   1
+  ]
+ },
+ "fails": [
+  [
+   "sig",
+   "Tylenol Extra Strength 500 mg 2 caplets every 6 hrs as needed",
+   "perDay: expected 4, got null"
+  ],
+  [
+   "sig",
+   "Tylenol Extra Strength 500 mg 2 caplets every 6 hrs as needed",
+   "mg: expected {\"acetaminophen\":4000}, got \"{}\""
+  ],
+  [
+   "safety",
+   "Norco 5-325 1 tab q6h prn pain\nTylenol 325 mg 1 tab q6h prn",
+   "missed apap_dup (got )"
+  ],
+  [
+   "safety",
+   "Allergies: Sulfa (hives)\nBactrim DS 1 tab PO BID x 3 days",
+   "missed allergy (got )"
+  ],
+  [
+   "warn",
+   "Go to the emergency room for confusion, fainting, or severe headache. Call the office for swelling or redness.",
+   "got 3 emergency / 1 call, expected 3 / 2"
+  ],
+  [
+   "warn",
+   "Seek medical care right away if you have black stools or vomit blood.",
+   "got 0 emergency / 0 call, expected 2 / 0"
+  ]
+ ]
+}

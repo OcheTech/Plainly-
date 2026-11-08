@@ -1,0 +1,97 @@
+{
+ "res": {
+  "Medicine lines recognized": [
+   20,
+   20,
+   100
+  ],
+  "Medicine fields correct (dose/frequency/route/PRN/duration/daily mg)": [
+   35,
+   38,
+   92.1
+  ],
+  "Non-medicine lines correctly ignored": [
+   5,
+   5,
+   100
+  ],
+  "Safety problems detected (recall)": [
+   6,
+   6,
+   100
+  ],
+  "Safe cases without false alarms": [
+   3,
+   3,
+   100
+  ],
+  "Lab result status correct": [
+   5,
+   5,
+   100
+  ],
+  "Critical lab values flagged correctly": [
+   5,
+   5,
+   100
+  ],
+  "Error-prone abbreviations found": [
+   4,
+   4,
+   100
+  ],
+  "Clean text without abbreviation false flags": [
+   1,
+   1,
+   100
+  ],
+  "Warning-sign lists split correctly": [
+   2,
+   2,
+   100
+  ]
+ },
+ "fieldStats": {
+  "perDay": [
+   15,
+   17
+  ],
+  "route": [
+   4,
+   4
+  ],
+  "times": [
+   3,
+   3
+  ],
+  "mg": [
+   4,
+   5
+  ],
+  "prn": [
+   6,
+   6
+  ],
+  "durationDays": [
+   3,
+   3
+  ]
+ },
+ "fails": [
+  [
+   "sig",
+   "Pregabalin 75 mg capsule: 1 capsule three times daily",
+   "perDay: expected 3, got 1"
+  ],
+  [
+   "sig",
+   "Pregabalin 75 mg capsule: 1 capsule three times daily",
+   "mg: expected {\"pregabalin\":225}, got \"{\\\"pregabalin\\\":75}\""
+  ],
+  [
+   "sig",
+   "Ipratropium 2 puffs inhaled four times daily",
+   "perDay: expected 4, got 1"
+  ]
+ ]
+}
